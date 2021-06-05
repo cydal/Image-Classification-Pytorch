@@ -9,6 +9,7 @@ import numpy as np
 import random
 import seaborn as sns
 import matplotlib.pyplot as plt
+import argparse
 
 
 from sklearn.preprocessing import LabelEncoder
@@ -27,12 +28,15 @@ from utils import datasets_to_df, Params
 from dataset import ImagesDataset
 
 
-wandb.init(project="img_classifier") ## take from params
+#wandb.init(project="img_classifier") ## take from params
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-
+parser = argparse.ArgumentParser()
+parser.add_argument("--model_dir",
+                    default=".",
+                    help="Directory containing params file")
 
 if __name__ == "__main__":
 
@@ -41,8 +45,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     json_path = os.path.join(args.model_dir, "params.json")
-    assert os.path.isfile(json_path),
-                "No json configuration file found at {}".format(json_path)
+    assert os.path.isfile(json_path), "No json configuration file found at {}".format(json_path)
     params = Params(json_path)
 
     #ToDo: Set WandB

@@ -9,7 +9,7 @@ import glob2
 import logging
 import random
 import numpy as np
-import pandas as import pd
+import pandas as pd
 from sklearn import metrics
 from PIL import Image
 
@@ -30,7 +30,7 @@ class Params:
     print(params.learning_rate)
     params.learning_rate = 0.5
     ```
-    
+
     """
 
     def __init__(self, json_path):
