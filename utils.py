@@ -5,6 +5,7 @@
 
 """ General Utility """
 import os
+import json
 import glob2
 import logging
 import random
@@ -86,3 +87,30 @@ def datasets_to_df(ds_path: str):
 
 
     return(df)
+
+def get_train_transforms(h, w, mu, std):
+    """
+    Transformations using albumentation library
+    """
+
+    train_transforms = A.Compose([
+    A.Resize(h, w, cv2.INTER_NEAREST),
+    A.CenterCrop(h, w),
+    A.Normalize(mean=means, std=stds),
+    ToTensor()
+    ])
+
+    return(train_transforms)
+
+def get_val_transforms(h, w, mu, std):
+    """
+    Transformations using albumentation library
+    """
+
+    val_transforms = A.Compose([
+    A.Resize(h, w, cv2.INTER_NEAREST),
+    A.Normalize(mean=means, std=stds),
+    ToTensor()
+    ])
+
+    return(val_transforms)

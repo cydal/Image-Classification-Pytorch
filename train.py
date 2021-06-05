@@ -24,7 +24,7 @@ import torch.nn as nn
 from torchsummary import summary
 import wandb
 
-from utils import datasets_to_df, Params
+from utils import datasets_to_df, Params, get_train_transforms, get_val_transforms
 from dataset import ImagesDataset
 
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     labelEncoder = LabelEncoder()
     y = labelEncoder.fit_transform(train_df["label"])
-    print("[INFO] Label Encoding:", lbl.classes_)
+    print("[INFO] Label Encoding:", labelEncoder.classes_)
 
     # split data
     X_train, X_test, y_train, y_test = train_test_split(train_df["fname"],
@@ -70,29 +70,37 @@ if __name__ == "__main__":
                                                         random_state=params.RANDOM_SEED)
     print(
         "[INFO] Training shape:",
-        train_x.shape,
-        train_y.shape,
-        np.unique(train_y, return_counts=True)
+        X_train.shape,
+        y_train.shape,
+        np.unique(y_train, return_counts=True)
     )
 
     print(
         "[INFO] Validation shape:",
-        val_x.shape,
-        val_y.shape,
-        np.unique(val_y, return_counts=True)
+        X_val.shape,
+        y_val.shape,
+        np.unique(y_val, return_counts=True)
     )
 
-    cws = class_weight.compute_class_weight("balanced", np.unique(train_y), train_y)
+    cws = class_weight.compute_class_weight("balanced", np.unique(y_train), y_train)
     print("[INFO] Class weights:", cws)
 
     class_mapping = {k: v for k, v in enumerate(labelEncoder.classes_)}
     inv_class_mapping = {v: k for k, v in class_mapping.items()}
 
-
     ##ToDo: Apply transformations
+    train_transforms = get_train_transforms(params.HEIGHT,
+                                      params.WIDTH,
+                                      params.MU,
+                                      params.STD)
 
-    train_dataset = ImagesDataset(train_x, train_y, None, None)
-    val_dataset = ImagesDataset(val_x, val_y, None, None)
+    val_transforms = get_val_transforms(params.HEIGHT,
+                                      params.WIDTH,
+                                      params.MU,
+                                      params.STD)
+
+    train_dataset = ImagesDataset(X_train, y_train, None, train_transforms)
+    val_dataset = ImagesDataset(X_val, y_val, None, val_transforms)
 
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=params.BATCH_SIZE,
