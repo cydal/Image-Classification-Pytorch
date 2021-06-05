@@ -13,12 +13,16 @@ import numpy as np
 import pandas as pd
 from sklearn import metrics
 from PIL import Image
+import cv2
 
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 import torch
 import torch.nn.functional as F
+
+import albumentations as A
+from albumentations.pytorch.transforms import ToTensor
 
 
 class Params:
@@ -96,7 +100,7 @@ def get_train_transforms(h, w, mu, std):
     train_transforms = A.Compose([
     A.Resize(h, w, cv2.INTER_NEAREST),
     A.CenterCrop(h, w),
-    A.Normalize(mean=means, std=stds),
+    A.Normalize(mean=mu, std=std),
     ToTensor()
     ])
 
@@ -109,7 +113,7 @@ def get_val_transforms(h, w, mu, std):
 
     val_transforms = A.Compose([
     A.Resize(h, w, cv2.INTER_NEAREST),
-    A.Normalize(mean=means, std=stds),
+    A.Normalize(mean=mu, std=std),
     ToTensor()
     ])
 

@@ -62,7 +62,7 @@ if __name__ == "__main__":
     print("[INFO] Label Encoding:", labelEncoder.classes_)
 
     # split data
-    X_train, X_test, y_train, y_test = train_test_split(train_df["fname"],
+    X_train, X_val, y_train, y_val = train_test_split(train_df["fname"],
                                                         y,
                                                         test_size=params.SPLIT_RATIO,
                                                         stratify=y,
@@ -91,13 +91,13 @@ if __name__ == "__main__":
     ##ToDo: Apply transformations
     train_transforms = get_train_transforms(params.HEIGHT,
                                       params.WIDTH,
-                                      params.MU,
-                                      params.STD)
+                                      params.MEANS,
+                                      params.STDS)
 
     val_transforms = get_val_transforms(params.HEIGHT,
                                       params.WIDTH,
-                                      params.MU,
-                                      params.STD)
+                                      params.MEANS,
+                                      params.STDS)
 
     train_dataset = ImagesDataset(X_train, y_train, None, train_transforms)
     val_dataset = ImagesDataset(X_val, y_val, None, val_transforms)
@@ -118,5 +118,7 @@ if __name__ == "__main__":
     im, lbl = next(iter(train_loader))
     print(im.shape, lbl.shape)
 
-    print("[INFO] Training shape:", train_loader.dataset.shape)
-    print("[INFO] Validation shape:", val_loader.dataset.shape)
+    print("[INFO] Training length:", len(train_loader.dataset))
+    print("[INFO] Validation length:", len(val_loader.dataset))
+
+    dataloaders_dict = {"train": train_loader, "val": val_loader}
