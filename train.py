@@ -25,7 +25,7 @@ from torchsummary import summary
 import wandb
 
 from utils import datasets_to_df, get_train_transforms, get_val_transforms
-from utils import set_global_seeds, Params
+from utils import set_global_seeds, Params, plot_hist
 
 from model import train_model, build_model
 from dataset import ImagesDataset
@@ -175,8 +175,6 @@ if __name__ == "__main__":
             use_wandb=params.USE_WANDB
         )
 
-        '''
         plot_hist(history)
         # save best model
         torch.save(best_model, params.SAVE_MODEL_PATH)
-        '''
