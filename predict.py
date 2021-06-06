@@ -25,6 +25,8 @@ import wandb
 
 from utils import get_val_transforms, Params, pred_images_to_df
 
+from dataset import ImagesDataset
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -53,4 +55,17 @@ if __name__ == "__main__":
 
     test_dataset = ImagesDataset(imgs_df["fname"], None, None, test_transforms)
 
-    
+    test_loader = torch.utils.data.DataLoader(test_dataset,
+                                               batch_size=params.BATCH_SIZE)
+
+    print(next(iter(test_loader)))
+    im = next(iter(test_loader))
+    print(im.shape)
+
+    model = torch.load("/content/models/resnet50.pth")
+    model.eval()
+
+    pred = model(im).argmax(dim=1, keepdim=True).flatten()
+    imgs_df["labels"] = pred
+
+    print(imgs_df)

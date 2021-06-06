@@ -2,7 +2,7 @@
 # Author: cydal
 #
 #
-%matplotlib inline
+
 import json
 import os
 import cv2

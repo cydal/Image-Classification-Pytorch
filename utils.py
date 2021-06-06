@@ -111,9 +111,10 @@ def pred_images_to_df(ds_path: str):
     if not os.path.exists:
         raise FileNotFoundError(f"Directory Dataset not found: {ds_path}")
 
-    filenames = glob2.glob(os.path.join(ds_path, "*/**.jpg"))
+    filenames = glob2.glob(os.path.join(ds_path, "**.jpg"))
 
     img_filenames = []
+    labels = []
 
     for f in filenames:
       labels.append(None)
