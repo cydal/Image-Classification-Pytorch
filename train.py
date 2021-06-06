@@ -28,7 +28,7 @@ from utils import datasets_to_df, Params, get_train_transforms, get_val_transfor
 from dataset import ImagesDataset
 
 
-#wandb.init(project="img_classifier") ## take from params
+wandb.init(project="img_classifier") ## take from params
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
