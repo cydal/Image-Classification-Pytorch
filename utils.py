@@ -98,6 +98,34 @@ def datasets_to_df(ds_path: str):
 
     return(df)
 
+def pred_images_to_df(ds_path: str):
+    """
+    Convert images path to DataFrame
+
+    Args:
+        ds_path (string): Path to dataset (prediction)
+
+    Returns:
+        pd.DataFrame : A pandas dataframe containing paths to dataset and labels.
+    """
+    if not os.path.exists:
+        raise FileNotFoundError(f"Directory Dataset not found: {ds_path}")
+
+    filenames = glob2.glob(os.path.join(ds_path, "*/**.jpg"))
+
+    img_filenames = []
+
+    for f in filenames:
+      labels.append(None)
+      img_filenames.append(f)
+
+    df = pd.DataFrame({
+        "fname":img_filenames,
+        "label":[None] * len(img_filenames)
+    })
+
+    return(df)
+
 def get_train_transforms(h, w, mu, std):
     """
     Transformations using albumentation library
