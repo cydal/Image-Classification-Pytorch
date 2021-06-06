@@ -296,12 +296,23 @@ def train_model(
     #optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
     #scheduler = StepLR(optimizer, step_size=6, gamma=0.1)
 
+    train_losses = []
+    test_losses = []
+    train_acc = []
+    test_acc = []
+
     for epoch in range(num_epochs):
         print("EPOCH:", epoch)
         train(model, device, dataloaders["train_loader"], optimizer, epoch)
         scheduler.step()
         test(model, device, dataloaders["val_loader"])
 
+    history = {
+        "train_losses": train_losses,
+        "test_losses": test_losses,
+        "train_acc": train_acc,
+        "test_acc": test_acc,
+    }
         # load best model weights
-        model.load_state_dict(best_model_wts)
-        return(model, history)
+    model.load_state_dict(best_model_wts)
+    return(model, history)

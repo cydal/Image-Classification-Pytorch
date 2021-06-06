@@ -24,11 +24,14 @@ import torch.nn as nn
 from torchsummary import summary
 import wandb
 
-from utils import datasets_to_df, Params, get_train_transforms, get_val_transforms
+from utils import datasets_to_df, get_train_transforms, get_val_transforms
+from utils import set_global_seeds, Params
+
+from model import train_model, build_model
 from dataset import ImagesDataset
 
 
-wandb.init(project="img_classifier") ## take from params
+#wandb.init(project="img_classifier") ## take from params
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -122,3 +125,58 @@ if __name__ == "__main__":
     print("[INFO] Validation length:", len(val_loader.dataset))
 
     dataloaders_dict = {"train": train_loader, "val": val_loader}
+
+
+    ## Feature Extraction
+    if params.FEATURE_EXTRACT:
+        net = build_model(
+                model_name: params.MODEL_NAME,
+                num_class: params.NUM_CLASSES,
+                in_channels: params.INPUT_CHANNELS,
+                embedding_size: params.EMBED_SIZE,
+                feature_extract: params.FEATURE_EXTRACT,
+                use_pretrained: params.USE_PRETRAIN,
+                bst_model_weights=params.TRAINED_MODEL_PATH
+        )
+
+        #net to device
+
+        summary(net, (params.INPUT_CHANNELS, params.WIDTH, params.HEIGHT))
+
+        #t_parameters = [p for p in net.parameters() if p.requires_grad]
+
+        if params.NUM_CLASSES < 2:
+            criterion = nn.BCEWithLogitsLoss(weight=torch.from_numpy(cws)).to(device)
+        else:
+            criterion = nn.CrossEntropyLoss().to(device)
+
+        #optimizer = torch.optim.AdamW(t_parameters, lr=params.LR, amsgrad=True)
+        optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
+
+        # one cycle scheduler
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            optimizer,
+            max_lr=params.LR * 100,
+            steps_per_epoch=len(train_loader),
+            epochs=params.EPOCHS
+        )
+
+        best_model, history = train_model(
+            model=net,
+            dataloaders=dataloaders_dict,
+            num_classes=params.NUM_CLASSES,
+            input_channels=params.INPUT_CHANNELS,
+            batch_size=params.BATCH_SIZE,
+            criterion=criterion,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            num_epochs=params.EPOCHS,
+            device=device,
+            use_wandb=params.USE_WANDB
+        )
+
+        '''
+        plot_hist(history)
+        # save best model
+        torch.save(best_model, params.SAVE_MODEL_PATH)
+        '''
