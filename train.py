@@ -127,6 +127,24 @@ if __name__ == "__main__":
     dataloaders_dict = {"train": train_loader, "val": val_loader}
 
 
+    # Set optimzer & lr_scheduler
+    if params.NUM_CLASSES < 2:
+        criterion = nn.BCEWithLogitsLoss(weight=torch.from_numpy(cws)).to(device)
+    else:
+        criterion = nn.CrossEntropyLoss().to(device)
+
+    #optimizer = torch.optim.AdamW(t_parameters, lr=params.LR, amsgrad=True)
+    optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
+
+    # one cycle scheduler
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer,
+        max_lr=params.LR * 100,
+        steps_per_epoch=len(train_loader),
+        epochs=params.EPOCHS
+    )
+
+
     ## Feature Extraction
     if params.FEATURE_EXTRACT:
         net = build_model(
@@ -139,27 +157,47 @@ if __name__ == "__main__":
                 bst_model_weights=params.TRAINED_MODEL_PATH
         )
 
-        #net to device
+
 
         summary(net, (params.INPUT_CHANNELS, params.WIDTH, params.HEIGHT))
 
-        #t_parameters = [p for p in net.parameters() if p.requires_grad]
-
-        if params.NUM_CLASSES < 2:
-            criterion = nn.BCEWithLogitsLoss(weight=torch.from_numpy(cws)).to(device)
-        else:
-            criterion = nn.CrossEntropyLoss().to(device)
-
-        #optimizer = torch.optim.AdamW(t_parameters, lr=params.LR, amsgrad=True)
-        optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
-
-        # one cycle scheduler
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(
-            optimizer,
-            max_lr=params.LR * 100,
-            steps_per_epoch=len(train_loader),
-            epochs=params.EPOCHS
+        best_model, history = train_model(
+            model=net,
+            dataloaders=dataloaders_dict,
+            num_classes=params.NUM_CLASSES,
+            input_channels=params.INPUT_CHANNELS,
+            batch_size=params.BATCH_SIZE,
+            criterion=criterion,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            num_epochs=params.EPOCHS,
+            device=device,
+            use_wandb=params.USE_WANDB
         )
+
+        plot_hist(history)
+        # save best model
+        torch.save(best_model, params.SAVE_MODEL_PATH)
+
+
+    # Finetuning
+    if params.TRAINED_MODEL_PATH is None and params.FINETUNE_LAYER != -1:
+        params.TRAINED_MODEL_PATH = params.SAVE_MODEL_PATH
+
+        print("Freezing upto => ", params.FINETUNE_LAYER, colorstr("layers"))
+
+        net = build_model(
+                params.MODEL_NAME,
+                params.NUM_CLASSES,
+                params.INPUT_CHANNELS,
+                params.EMBED_SIZE,
+                params.FEATURE_EXTRACT,
+                params.USE_PRETRAIN,
+                params.FINETUNE_LAYER,
+                bst_model_weights=params.TRAINED_MODEL_PATH
+        )
+
+        summary(net, (params.INPUT_CHANNELS, params.WIDTH, params.HEIGHT))
 
         best_model, history = train_model(
             model=net,

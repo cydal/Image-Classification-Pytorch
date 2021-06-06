@@ -251,8 +251,6 @@ def test(model, device, test_loader, criterion):
         criterion : Torch loss function
     """
 
-    best_model_wts = copy.deepcopy(model.state_dict())
-
     model.eval()
     test_loss = 0
     correct = 0
