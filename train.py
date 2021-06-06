@@ -130,12 +130,12 @@ if __name__ == "__main__":
     ## Feature Extraction
     if params.FEATURE_EXTRACT:
         net = build_model(
-                model_name: params.MODEL_NAME,
-                num_class: params.NUM_CLASSES,
-                in_channels: params.INPUT_CHANNELS,
-                embedding_size: params.EMBED_SIZE,
-                feature_extract: params.FEATURE_EXTRACT,
-                use_pretrained: params.USE_PRETRAIN,
+                params.MODEL_NAME,
+                params.NUM_CLASSES,
+                params.INPUT_CHANNELS,
+                params.EMBED_SIZE,
+                params.FEATURE_EXTRACT,
+                params.USE_PRETRAIN,
                 bst_model_weights=params.TRAINED_MODEL_PATH
         )
 

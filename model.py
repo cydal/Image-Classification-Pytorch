@@ -22,6 +22,9 @@ from tqdm import tqdm
 import wandb
 import torch
 
+best_acc = 0
+best_model_wts = None
+
 
 def set_parameter_requires_grad(model, feature_extracting: bool, num_ft_layers: int):
     """
@@ -48,13 +51,16 @@ def set_parameter_requires_grad(model, feature_extracting: bool, num_ft_layers: 
 
 
 
-def build_model(model_name: str,
-                num_class: int,
-                in_channels: int,
-                embedding_size: int,
-                feature_extract: bool = True,
-                use_pretrained: bool,
-                bst_model_weights=None):
+def build_model(
+        model_name: str,
+        num_classes: int,
+        in_channels: int,
+        embedding_size: int,
+        feature_extract: bool = True,
+        use_pretrained: bool = True,
+        num_ft_layers: int = -1,
+        bst_model_weights=None
+):
 
     """
     Various architectures to train from scratch, finetune or as feature extractor.
@@ -203,31 +209,31 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
     processed = 0
     for batch_idx, (data, target) in enumerate(pbar):
     # get samples
-    data, target = data.to(device), target.to(device)
+        data, target = data.to(device), target.to(device)
 
-    # Init
-    optimizer.zero_grad()
+        # Init
+        optimizer.zero_grad()
 
-    # Predict
-    y_pred = model(data)
+        # Predict
+        y_pred = model(data)
 
-    # Calculate loss
-    # F.nll_loss
-    loss = criterion(y_pred, target)
-    train_losses.append(loss)
+        # Calculate loss
+        # F.nll_loss
+        loss = criterion(y_pred, target)
+        train_losses.append(loss)
 
-    # Backpropagation
-    loss.backward()
-    optimizer.step()
+        # Backpropagation
+        loss.backward()
+        optimizer.step()
 
-    # Update pbar-tqdm
+        # Update pbar-tqdm
 
-    pred = y_pred.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
-    correct += pred.eq(target.view_as(pred)).sum().item()
-    processed += len(data)
+        pred = y_pred.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+        correct += pred.eq(target.view_as(pred)).sum().item()
+        processed += len(data)
 
-    pbar.set_description(desc= f'Loss={loss.item()} Batch_id={batch_idx} Accuracy={100*correct/processed:0.2f}')
-    train_acc.append(100*correct/processed)
+        pbar.set_description(desc= f'Loss={loss.item()} Batch_id={batch_idx} Accuracy={100*correct/processed:0.2f}')
+        train_acc.append(100*correct/processed)
 
 def test(model, device, test_loader, criterion):
     """
@@ -239,6 +245,9 @@ def test(model, device, test_loader, criterion):
         test_loader (Trainloader) : Number of input channels
         criterion : Torch loss function
     """
+
+    best_model_wts = copy.deepcopy(model.state_dict())
+
     model.eval()
     test_loss = 0
     correct = 0
@@ -257,10 +266,13 @@ def test(model, device, test_loader, criterion):
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
-    test_acc.append(100. * correct / len(test_loader.dataset))
+    test_accuracy = 100. * correct / len(test_loader.dataset)
+    if test_accuracy > best_acc:
+        best_model_wts = copy.deepcopy(model.state_dict())
+
+    test_acc.append(test_accuracy)
 
 def train_model(
-
     model,
     dataloaders: Dict,
     num_classes: int,
@@ -303,9 +315,9 @@ def train_model(
 
     for epoch in range(num_epochs):
         print("EPOCH:", epoch)
-        train(model, device, dataloaders["train_loader"], optimizer, epoch)
+        train(model, device, dataloaders["train"], optimizer, epoch, criterion)
         scheduler.step()
-        test(model, device, dataloaders["val_loader"])
+        test(model, device, dataloaders["val"], criterion)
 
     history = {
         "train_losses": train_losses,
